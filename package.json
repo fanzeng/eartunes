@@ -1,28 +1,31 @@
 {
-  "name": "programblog",
+  "name": "eartunes",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "start:local": "npx nodemon index.js",
     "devserver": "./node_modules/nodemon/bin/nodemon.js index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fanzeng/programblog.git"
+    "url": "git+https://github.com/fanzeng/eartunes.git"
   },
   "author": "fanzeng",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/fanzeng/programblog/issues"
+    "url": "https://github.com/fanzeng/eartunes/issues"
   },
-  "homepage": "https://github.com/fanzeng/programblog#readme",
+  "homepage": "https://github.com/fanzeng/eartunes#readme",
   "dependencies": {
     "express": "^4.17.1",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "nodemon": "^1.19.1"
+    "nodemon": "^1.19.1",
+    "npx": "^10.2.2",
+    "fft-js": "^0.0.12"
   }
 }
