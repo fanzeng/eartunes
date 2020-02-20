@@ -16,6 +16,8 @@ app.get('/index.js', function (request, response) {
 	response.writeHead(200, {'Content-Type': 'text/plain'});
 	response.end('Hello World\n');
 })
+app.use(express.static(__dirname + '/node_modules/minifft'));
+
 app.post('/index.js', function (request, response) {
   console.log(request.body);
 });
