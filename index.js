@@ -10,8 +10,8 @@ const port = process.env.PORT || 8081;
 
 var app = express();
 app.use(express.urlencoded({ extended: false }));
-console.log(__dirname + '/public_html')
-app.use(express.static(__dirname + '/public_html'));
+console.log(__dirname + '/public')
+app.use(express.static(__dirname + '/public'));
 app.get('/index.js', function (request, response) {
 	response.writeHead(200, {'Content-Type': 'text/plain'});
 	response.end('Hello World\n');
