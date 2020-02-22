@@ -1,27 +1,82 @@
+
+let stopped = true
+let microphone_off = true;
+let gumStream;
+let canvasTime = document.querySelector('.visualizer_time');
+let canvasFreq = document.querySelector('.visualizer_freq');
+
+function drawPlotBackground(canvas, width, height) {
+  let canvasCtx = canvas.getContext("2d");
+
+  canvasCtx.fillStyle = 'rgb(200, 200, 200)';
+  canvasCtx.fillRect(0, 0, width, height);
+}
 window.addEventListener('DOMContentLoaded', (event) => {
-  $("#start")[0].onclick = () => {
+  drawPlotBackground(canvasTime, 1000, 100);
+  drawPlotBackground(canvasFreq, 1000, 100);
+
+  $("#turn_on_microphone")[0].onclick = () => {
+    console.log('clicked');
+    microphone_off = ! microphone_off;
+    $("#turn_on_microphone")[0].innerHTML = microphone_off ? 'turn on microphone' : 'turn off microphone';
+    if ( ! microphone_off) {
+      if (gumStream) {
+        gumStream.getTracks().forEach(
+          (track) => { 
+            console.log('resuming track' + track);
+            track.enabled = true;
+          }
+        )
+      } else {
+        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+        .then(
+          function(stream) {
+            gumStream = stream;
+            console.log('started stream ' + gumStream);
+            // $('#start_analyzing')
+          handleSuccess(gumStream);
+
+          }
+        );
+      }
+
+    } else {
+      gumStream.getTracks().forEach(
+        (track) => { 
+          console.log('stopping track' + track);
+          track.enabled = false;
+        }
+      )
+    }
+  
+  }
+
+  $("#start_analyzing")[0].onclick = () => {
     console.log('clicked');
     stopped = ! stopped;
-    $("#start")[0].innerHTML = stopped ? 'start' : 'stop';
+    $("#start_analyzing")[0].innerHTML = stopped ? 'start analyzing' : 'stop analyzing';
   }
-  navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-  .then(handleSuccess);
-
 });
 
 
-let stopped = true
-
-const handleSuccess = function(stream) {
+function handleSuccess(stream) {
+  if ( ! stream || ! stream.active) {
+    console.log('stream not active');
+    return ;
+  }
   const audioCtx = new AudioContext();
-  let fftSize = 32768;
+  let fftSize = 16384;
   let frameCount = 16384;
   let numBuffers = fftSize / frameCount;
   const source = audioCtx.createMediaStreamSource(stream);
 
-  var scriptNode = audioCtx.createScriptProcessor(frameCount, 1, 1);
+  let scriptNode = audioCtx.createScriptProcessor(frameCount, 1, 1);
   source.connect(scriptNode);
   scriptNode.connect(audioCtx.destination);
+  source.onended = function() {
+    source.disconnect(scriptNode);
+    scriptNode.disconnect(audioCtx.destination);
+  }
 
   let fft = new miniFFT(fftSize);
 
@@ -29,14 +84,23 @@ const handleSuccess = function(stream) {
   let bufferCount = 0;
 
   scriptNode.onaudioprocess = function(audioProcessingEvent) {
-    if (stopped) return;
 
     let inputBuffer = audioProcessingEvent.inputBuffer;
     let channelData = inputBuffer.getChannelData(0);
-    console.log('inputBuffer.getChannelData(0).length=' + channelData.length)
+    // console.log('inputBuffer.getChannelData(0).length=' + channelData.length)
     input = input.concat(...channelData);
+
+    let inputVisualize = input.map(
+      x => x*1. *25
+    )
+    visualize(canvasTime, inputVisualize, 1000, 100, 50);
+
+    if (stopped) {
+      return ;
+    }
+
     bufferCount++;
-    console.log("input.length=" +input.length)
+    // console.log("input.length=" +input.length)
     if (bufferCount < numBuffers) {
       return ;
     }
@@ -66,26 +130,18 @@ const handleSuccess = function(stream) {
     measureFreqText.innerHTML = (Math.round(pitch*100)/100.).toString();
 
     let peakVal = fft.getMax(res);
-    console.log('pitch=' + pitch)
-    console.log('peakVal=' + peakVal)
-    let canvasTime = document.querySelector('.visualizer_time');
-    let canvasFreq = document.querySelector('.visualizer_freq');
-
-    let inputVisualize = input.map(
-      x => x*1. *25
-    )
+    // console.log('pitch=' + pitch)
+    // console.log('peakVal=' + peakVal)
 
     let resVisualize = res.map(
       x => x*1. / peakVal*100
     )
 
-    visualize(canvasTime, inputVisualize, 1000, 100, 50);
     visualize(canvasFreq, resVisualize, 1000, 100, 0);
     input = [];
     bufferCount = 0;
 
   }
-
 }
 
 

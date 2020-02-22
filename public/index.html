@@ -11,11 +11,29 @@
 	<h1>
 		eartunes
 	</h1>
-    <canvas class="visualizer_time" width="1000" height="100"></canvas> 
-    <canvas class="visualizer_freq" width="1000" height="100"></canvas> 
 	<div>
-		<button id="start" value="start">start</button>
-		<span id="measured_freq">measured frequency</span>
+		<p>
+			Sound waveform:
+		</p>
+		<canvas class="visualizer_time" width="1000" height="100"></canvas> 
+	</div>
+	<div>
+		<p>
+			Frequency plot:
+		</p>
+		<canvas class="visualizer_freq" width="1000" height="100"></canvas> 
+	</div>
+	<div>
+		<p>
+			<button id="turn_on_microphone" value="turn on microphone">turn on microphone</button>
+		</p>
+		<p>
+			<button id="start_analyzing" value="start_analyzing">start analyzing</button>
+		</p>
+		<p>Peak frequency:
+			<span id="measured_freq">?</span>
+			Hz
+		</p>
 	</div>
 	<script type="text/javascript" src="https://fanzeng.github.io/minifft/minifft.js"></script>
 	<script type="text/javascript" src="script/index.js"></script>
