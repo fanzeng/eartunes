@@ -89,7 +89,11 @@ button {
    border-radius: 0px;
 }
 
-button:hover {
+button:disabled {
+  color: #555555;
+}
+
+button:enabled:hover {
   opacity: 1;
   transform: scale(1.1);
 }
