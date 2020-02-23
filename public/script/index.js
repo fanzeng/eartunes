@@ -21,7 +21,7 @@ let frameCount = 16384;
 
 let audioCtx;
 let scriptNode;
-let arrayNotes = []
+let arrayNote = []
 
 
 function drawCanvasBackground(canvas, width, height) {
@@ -83,6 +83,30 @@ window.addEventListener('DOMContentLoaded', (event) => {
     stopped = ! stopped;
     $("#start_analyzing")[0].innerHTML = stopped ? 'start analyzing' : 'stop analyzing';
   }
+
+
+  $.ajax({
+    type: "GET",
+    url: "resource/notes_vs_freq.csv",
+    dataType: "text",
+    success: (data) => {
+      console.log(data);
+      let allLines = data.split(/\r\n|\n/);
+      for (let i = 1; i < allLines.length; i++) {
+        let line = allLines[i];
+        let allItems = line.split(',');
+        let noteName = allItems[2];
+        let freq = allItems[3];
+        arrayNote.push(
+          {
+            'noteName': noteName,
+            'freq': freq
+          }
+        )
+      }
+    }
+ });
+ 
 });
 
 
@@ -151,10 +175,35 @@ function handleSuccess(stream) {
     let pitch = fft.getArgmax(res)*factor;
     res  = res.slice(low, high)
 
-    let measureFreqText = document.querySelector('#measured_freq');
-    measureFreqText.innerHTML = (Math.round(pitch*100)/100.).toString();
+    $('#measured_freq')[0].innerHTML = (Math.round(pitch*100)/100.).toString();
     
+    let minDiff = 1e7;
+    let closestNoteName = '?';
+    let nominalfrequency = '?'
+    for (let i = 0; i < arrayNote.length; i++) {
+      let note = arrayNote[i];
+      let diff = Math.abs(parseFloat(note.freq) - pitch);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestNoteName = note.noteName;
+        nominalfrequency = Math.round(note.freq*100)/100.;
+      }
+    }
+    $('#closest_note_name')[0].innerHTML = closestNoteName;
     
+    $('#nominal_frequency')[0].innerHTML = nominalfrequency;
+    let sharpFlatString = 'You are ';
+    let diff = pitch - nominalfrequency;
+    sharpFlatString += Math.abs(Math.round(diff*100)/100.);
+    if (diff > 0) {
+      sharpFlatString += 'Hz sharp';
+    } else if (diff < 0) {
+      sharpFlatString += ' Hz flat';
+    } else {
+      sharpFlatString += ' right on pitch';
+    }
+    $('#sharp_flat_string')[0].innerHTML = sharpFlatString;
+
     let subsampleRate = 64;
     let subsampledRes = res.filter( (value, index, arr) => {
       return index % subsampleRate == 0;
