@@ -22,17 +22,30 @@ let frameCount = 16384;
 let audioCtx;
 let scriptNode;
 let arrayNote = []
+let plotHeight;
+let plotWidth;
+if (isMobileDevice()) {
+  plotHeight = 100;
+} else {
+  plotHeight = 200;
+}
+plotWidth = screen.width*0.8;
 
+function isMobileDevice() {
+	return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
 
 function drawCanvasBackground(canvas, width, height) {
   let canvasCtx = canvas.getContext("2d");
+  canvasCtx.canvas.width  = width;
+  canvasCtx.canvas.height = height;
 
   canvasCtx.fillStyle = 'rgb(200, 200, 200)';
   canvasCtx.fillRect(0, 0, width, height);
 }
 window.addEventListener('DOMContentLoaded', (event) => {
-  drawCanvasBackground(canvasTime, 1000, 100);
-  drawCanvasBackground(canvasFreq, 1000, 100);
+  drawCanvasBackground(canvasTime, plotWidth, plotHeight);
+  drawCanvasBackground(canvasFreq, plotWidth, plotHeight);
 
   $("#turn_on_microphone")[0].onclick = () => {
     microphoneOff = ! microphoneOff;
@@ -147,7 +160,7 @@ function handleSuccess(stream) {
     let timeSeriesVisualize = timeSeries.map(
       x => x*1. *25
     )
-    visualize(canvasTime, timeSeriesVisualize, 512, 1000, 100, 50);
+    visualize(canvasTime, timeSeriesVisualize, 512, plotWidth, plotHeight, plotHeight/2);
 
     if (stopped) {
       return ;
@@ -212,7 +225,7 @@ function handleSuccess(stream) {
     let resVisualize = res.map(
       x => x*1. / peakVal*100
     )
-    visualize(canvasFreq, resVisualize, subsampleRate, 1000, 100, 0);
+    visualize(canvasFreq, resVisualize, subsampleRate, plotWidth, plotHeight, 0);
   }
 }
 
