@@ -24,12 +24,18 @@ let scriptNode;
 let arrayNote = []
 let plotHeight;
 let plotWidth;
-if (isMobileDevice()) {
-  plotHeight = 100;
-} else {
-  plotHeight = 200;
-}
 plotWidth = screen.width*0.8;
+plotHeight = $(window).height()*0.2;
+
+let subSampleRateTimeSeries;
+let subSampleRateFreqDomain;
+if (isMobileDevice()) {
+  subSampleRateTimeSeries = 512;
+  subSampleRateFreqDomain = 64;
+} else {
+  subSampleRateTimeSeries = 1;
+  subSampleRateFreqDomain = 1;
+}
 
 function isMobileDevice() {
 	return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -160,7 +166,7 @@ function handleSuccess(stream) {
     let timeSeriesVisualize = timeSeries.map(
       x => x*1. *25
     )
-    visualize(canvasTime, timeSeriesVisualize, 512, plotWidth, plotHeight, plotHeight/2);
+    visualize(canvasTime, timeSeriesVisualize, subSampleRateTimeSeries, plotWidth, plotHeight, plotHeight/2);
 
     if (stopped) {
       return ;
@@ -217,15 +223,14 @@ function handleSuccess(stream) {
     }
     $('#sharp_flat_string')[0].innerHTML = sharpFlatString;
 
-    let subsampleRate = 64;
     let subsampledRes = res.filter( (value, index, arr) => {
-      return index % subsampleRate == 0;
+      return index % subSampleRateFreqDomain == 0;
     });
     let peakVal = fft.getMax(subsampledRes);
     let resVisualize = res.map(
       x => x*1. / peakVal*100
     )
-    visualize(canvasFreq, resVisualize, subsampleRate, plotWidth, plotHeight, 0);
+    visualize(canvasFreq, resVisualize, subSampleRateFreqDomain, plotWidth, plotHeight, 0);
   }
 }
 
