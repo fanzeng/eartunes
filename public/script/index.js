@@ -29,6 +29,9 @@ plotHeight = $(window).height()*0.2;
 
 let subSampleRateTimeSeries;
 let subSampleRateFreqDomain;
+
+let pitchChangeNoteOffset = 0;
+
 if (isMobileDevice()) {
   subSampleRateTimeSeries = 512;
   subSampleRateFreqDomain = 64;
@@ -56,8 +59,8 @@ window.addEventListener('DOMContentLoaded', (event) => {
   $("#turn_on_microphone")[0].onclick = () => {
     microphoneOff = ! microphoneOff;
     console.log('microphoneOff =' + microphoneOff);
-    $("#turn_on_microphone")[0].innerHTML = microphoneOff ? 'turn on microphone' : 'turn off microphone';
-    if ( ! microphoneOff) {
+    $("#turn_on_microphone")[0].innerHTML = microphoneOff ? 'Microphone On' : 'Microphone Off';
+    if (!microphoneOff) {
       if (gumStream) {
         gumStream.getTracks().forEach(
           (track) => { 
@@ -103,6 +106,22 @@ window.addEventListener('DOMContentLoaded', (event) => {
     $("#start_analyzing")[0].innerHTML = stopped ? 'start analyzing' : 'stop analyzing';
   }
 
+  $('#pitch_change_select').on('change', function(e) {
+    switch(this.value) {
+      case 'noChange':
+        pitchChangeNoteOffset = 0;
+        break;
+      case 'halfNoteFlat':
+        pitchChangeNoteOffset = 1;
+        break;
+      case 'wholeNoteFlat':
+        pitchChangeNoteOffset = 2;
+        break;
+      default:
+        break;
+    }
+    console.log('pitchChangeNoteOffset=', pitchChangeNoteOffset);
+  });
 
   $.ajax({
     type: "GET",
@@ -204,7 +223,9 @@ function handleSuccess(stream) {
       let diff = Math.abs(parseFloat(note.freq) - pitch);
       if (diff < minDiff) {
         minDiff = diff;
-        closestNoteName = note.noteName;
+        let noteId = Math.min(arrayNote.length - 1, i + pitchChangeNoteOffset);
+        let closestNote = arrayNote[noteId];
+        closestNoteName = closestNote.noteName;
         nominalfrequency = Math.round(note.freq*100)/100.;
       }
     }
@@ -223,7 +244,7 @@ function handleSuccess(stream) {
     }
     $('#sharp_flat_string')[0].innerHTML = sharpFlatString;
 
-    let subsampledRes = res.filter( (value, index, arr) => {
+    let subsampledRes = res.filter((value, index, arr) => {
       return index % subSampleRateFreqDomain == 0;
     });
     let peakVal = fft.getMax(subsampledRes);
