@@ -2,8 +2,8 @@
 let stopped = true
 let microphoneOff = true;
 let gumStream;
-let canvasTime = document.querySelector('.visualizer_time');
-let canvasFreq = document.querySelector('.visualizer_freq');
+let canvasTime = document.querySelector('.visualizer-time');
+let canvasFreq = document.querySelector('.visualizer-freq');
 let requestAnimationFrame = window.requestAnimationFrame || 
                             window.mozRequestAnimationFrame || 
                             window.webkitRequestAnimationFrame || 
@@ -11,10 +11,6 @@ let requestAnimationFrame = window.requestAnimationFrame ||
                             window.msRequestAnimationFrame;
 
 let AudioContext = window.AudioContext || window.webkitAudioContext;    
-
-
-// let fftSize = 16384;
-// let frameCount = 16384;
 
 let fftSize = 32768;
 let frameCount = 16384;
@@ -31,10 +27,15 @@ let subSampleRateTimeSeries;
 let subSampleRateFreqDomain;
 
 let pitchChangeNoteOffset = 0;
+let freqLow = 150;
+let freqHigh = 600;
+let isTemperamentOctaveOnly = true;
+let isPitchTableShown = false;
 
+let arrAnimationFrames = [];
 if (isMobileDevice()) {
-  subSampleRateTimeSeries = 512;
-  subSampleRateFreqDomain = 64;
+  subSampleRateTimeSeries = 256;
+  subSampleRateFreqDomain = 16;
 } else {
   subSampleRateTimeSeries = 1;
   subSampleRateFreqDomain = 1;
@@ -52,18 +53,40 @@ function drawCanvasBackground(canvas, width, height) {
   canvasCtx.fillStyle = 'rgb(200, 200, 200)';
   canvasCtx.fillRect(0, 0, width, height);
 }
-window.addEventListener('DOMContentLoaded', (event) => {
+
+function stopGumStreamtracks() {
+  gumStream.getTracks().forEach(
+    track => { 
+      console.log('stopping track' + track);
+      track.enabled = false;
+      $('#start-analyzing').attr('disabled','disabled');
+    }
+  )
+}
+
+function cancelAllAnimationFrames() {
+  arrAnimationFrames.forEach(animationFrame => {
+    cancelAnimationFrame(animationFrame)
+  });
+  arrAnimationFrames = [];
+}
+
+window.addEventListener('beforeunload', () => {
+  stopGumStreamtracks();
+  cancelAllAnimationFrames();
+});
+
+window.addEventListener('DOMContentLoaded', () => {
   drawCanvasBackground(canvasTime, plotWidth, plotHeight);
   drawCanvasBackground(canvasFreq, plotWidth, plotHeight);
-
-  $("#turn_on_microphone")[0].onclick = () => {
-    microphoneOff = ! microphoneOff;
+  $("#turn-on-microphone")[0].onclick = () => {
+    microphoneOff = !microphoneOff;
     console.log('microphoneOff =' + microphoneOff);
-    $("#turn_on_microphone")[0].innerHTML = microphoneOff ? 'Microphone On' : 'Microphone Off';
+    $("#turn-on-microphone")[0].innerHTML = microphoneOff ? 'Microphone On' : 'Microphone Off';
     if (!microphoneOff) {
       if (gumStream) {
         gumStream.getTracks().forEach(
-          (track) => { 
+          track => { 
             console.log('resuming track' + track);
             track.enabled = true;
           }
@@ -78,35 +101,26 @@ window.addEventListener('DOMContentLoaded', (event) => {
             scriptNode = audioCtx.createScriptProcessor(frameCount, 1, 1);
             scriptNode.connect(audioCtx.destination);
             handleSuccess(gumStream);
-
           }
         ).catch(
-          (e) => alert('Your browser does not support navigator.mediaDevices.getUserMedia.'
+          e => alert('Your browser does not support navigator.mediaDevices.getUserMedia.'
              + 'Additional error message:' + e
           )
         );
       }
-      $('#start_analyzing').removeAttr('disabled');;
-
+      $('#start-analyzing').removeAttr('disabled');;
     } else {
-      gumStream.getTracks().forEach(
-        (track) => { 
-          console.log('stopping track' + track);
-          track.enabled = false;
-          $('#start_analyzing').attr('disabled','disabled');
-        }
-      )
+      stopGumStreamtracks();
+      cancelAllAnimationFrames();
     }
-  
   }
 
-  $("#start_analyzing")[0].onclick = () => {
-    console.log('clicked');
-    stopped = ! stopped;
-    $("#start_analyzing")[0].innerHTML = stopped ? 'start analyzing' : 'stop analyzing';
+  $("#start-analyzing")[0].onclick = () => {
+    stopped = !stopped;
+    $("#start-analyzing")[0].innerHTML = stopped ? 'start analyzing' : 'stop analyzing';
   }
 
-  $('#pitch_change_select').on('change', function(e) {
+  $('#pitch-change-select').on('change', function(e) {
     switch(this.value) {
       case 'noChange':
         pitchChangeNoteOffset = 0;
@@ -120,36 +134,56 @@ window.addEventListener('DOMContentLoaded', (event) => {
       default:
         break;
     }
-    console.log('pitchChangeNoteOffset=', pitchChangeNoteOffset);
   });
+
+  $('#temperament-octave-only').on('change', function(e) {
+    if (this.checked) {
+      freqLow = 150;
+      freqHigh = 600;
+      isTemperamentOctaveOnly = true;
+    }
+    else {
+      freqLow = 20;
+      freqHigh = 8000;
+      isTemperamentOctaveOnly = false;
+    }
+  });
+
+  $("#btn-show-pitch-table")[0].onclick = () => {
+    isPitchTableShown = !isPitchTableShown;
+    const pitchTableElem = $("#pitch-table");
+    if (isPitchTableShown) {
+      pitchTableElem.show();
+      $("#btn-show-pitch-table")[0].innerHTML = 'Hide pitch table';
+    }
+    else {
+      pitchTableElem.hide();
+      $("#btn-show-pitch-table")[0].innerHTML = 'Show pitch table';
+    }
+  };
 
   $.ajax({
     type: "GET",
     url: "resource/notes_vs_freq.csv",
     dataType: "text",
-    success: (data) => {
-      console.log(data);
+    success: data => {
       let allLines = data.split(/\r\n|\n/);
       for (let i = 1; i < allLines.length; i++) {
         let line = allLines[i];
         let allItems = line.split(',');
         let noteName = allItems[2];
         let freq = allItems[3];
-        arrayNote.push(
-          {
-            'noteName': noteName,
-            'freq': freq
-          }
-        )
+        arrayNote.push({
+          'noteName': noteName,
+          'freq': freq
+        });
       }
     }
  });
- 
 });
 
-
 function handleSuccess(stream) {
-  if ( ! stream || ! stream.active) {
+  if (!stream || !stream.active) {
     console.log('stream not active');
     return ;
   }
@@ -162,9 +196,7 @@ function handleSuccess(stream) {
     source.disconnect(scriptNode);
     scriptNode.disconnect(audioCtx.destination);
   }
-
   let fft = new miniFFT(fftSize);
-
   let input = [];
   let bufferCount = 0;
 
@@ -183,7 +215,7 @@ function handleSuccess(stream) {
     input = [];
     bufferCount = 0;
     let timeSeriesVisualize = timeSeries.map(
-      x => x*1. *25
+      x => x * 25.
     )
     visualize(canvasTime, timeSeriesVisualize, subSampleRateTimeSeries, plotWidth, plotHeight, plotHeight/2);
 
@@ -192,59 +224,51 @@ function handleSuccess(stream) {
     }
 
     // test frequency measurement correctness
-    
-    // let dt = 1./44100;
+        // let dt = 1./44100;
     // let freq = 10000.;
-    // for (var j = 0; j < input.length; j++) {
+    // for (let j = 0; j < input.length; j++) {
     //   let t = j*dt;
     //   input[j] = Math.sin(2*Math.PI*freq*t);
     // }
 
-    //
-
     let res = fft.analyze(timeSeries);
     res = fft.toMagnitude(res).slice(0, res.length/2);
-    let freqLow = 20;
-    let freqHigh = 8000;
-    let factor = 44100./(fftSize);
-    let low = freqLow/factor;
-    let high = freqHigh/factor;
 
-    let pitch = fft.getArgmax(res)*factor;
-    res  = res.slice(low, high)
-
-    $('#measured_freq')[0].innerHTML = (Math.round(pitch*100)/100.).toString();
-    
+    let df = 44100. / fftSize; // delta f where f is frequency
+    let lowIdx = freqLow / df;
+    let highIdx = freqHigh / df;
+    res  = res.slice(lowIdx, highIdx);
+    let pitch = (lowIdx + fft.getArgmax(res))*df;
+    $('#measured-freq')[0].innerHTML = (Math.round(pitch*1000)/1000.).toFixed(3);
     let minDiff = 1e7;
     let closestNoteName = '?';
-    let nominalfrequency = '?'
-    for (let i = 0; i < arrayNote.length; i++) {
-      let note = arrayNote[i];
+    let nominalfrequency = '?';
+    const arrayCandidateNote = isTemperamentOctaveOnly? arrayNote.slice(33, 53) : arrayNote; // F3 to C5
+    for (let i = 0; i < arrayCandidateNote.length; i++) {
+      let note = arrayCandidateNote[i];
       let diff = Math.abs(parseFloat(note.freq) - pitch);
       if (diff < minDiff) {
         minDiff = diff;
-        let noteId = Math.min(arrayNote.length - 1, i + pitchChangeNoteOffset);
-        let closestNote = arrayNote[noteId];
-        closestNoteName = closestNote.noteName;
-        nominalfrequency = Math.round(note.freq*100)/100.;
+        let noteId = Math.min(arrayCandidateNote.length - 1, i + pitchChangeNoteOffset);
+        let closestNote = arrayCandidateNote[noteId];
+        closestNoteName = closestNote.noteName.substr(0, 3);
+        nominalfrequency = (Math.round(note.freq*1000)/1000.).toFixed(3);
       }
     }
-    $('#closest_note_name')[0].innerHTML = closestNoteName;
-    
-    $('#nominal_frequency')[0].innerHTML = nominalfrequency;
+    $('#closest-note-name')[0].innerHTML = closestNoteName;
+    $('#nominal-frequency')[0].innerHTML = nominalfrequency;
     let sharpFlatString = 'You are ';
     let diff = pitch - nominalfrequency;
-    sharpFlatString += Math.abs(Math.round(diff*100)/100.);
+    sharpFlatString += Math.abs(Math.round(diff*1000)/1000.).toFixed(3).padStart(6, '0');
     if (diff > 0) {
-      sharpFlatString += 'Hz sharp';
+      sharpFlatString += ' Hz ♯';
     } else if (diff < 0) {
-      sharpFlatString += ' Hz flat';
+      sharpFlatString += ' Hz ♭';
     } else {
       sharpFlatString += ' right on pitch';
     }
-    $('#sharp_flat_string')[0].innerHTML = sharpFlatString;
-
-    let subsampledRes = res.filter((value, index, arr) => {
+    $('#sharp-flat-string')[0].innerHTML = sharpFlatString;
+    let subsampledRes = res.filter((value, index) => {
       return index % subSampleRateFreqDomain == 0;
     });
     let peakVal = fft.getMax(subsampledRes);
@@ -255,13 +279,11 @@ function handleSuccess(stream) {
   }
 }
 
-
 // draw an oscilloscope of the current audio source
 function visualize(canvas, dataArray, subsampleRate, width, height, offset) {
-
   let draw = () => {
-    let canvasCtx = canvas.getContext("2d");
-    drawVisual = requestAnimationFrame(draw);
+    let canvasCtx = canvas.getContext('2d');
+    arrAnimationFrames.push(requestAnimationFrame(draw));
   
     canvasCtx.fillStyle = 'rgb(200, 200, 200)';
     canvasCtx.fillRect(0, 0, width, height);
@@ -271,13 +293,11 @@ function visualize(canvas, dataArray, subsampleRate, width, height, offset) {
   
     canvasCtx.beginPath();
     let dataLength = dataArray.length;
-    var sliceWidth = width * 1.0 / dataLength * subsampleRate;
-    var x = 0;
-    for(var i = 0; i < dataLength; i += subsampleRate) {
-  
-      var v = offset + dataArray[i];
-      var y = height - v;
-  
+    let sliceWidth = width * 1.0 / dataLength * subsampleRate;
+    let x = 0;
+    for(let i = 0; i < dataLength; i += subsampleRate) {
+      let v = offset + dataArray[i];
+      let y = height - v;
       if(i === 0) {
         canvasCtx.moveTo(x, y);
       } else {
@@ -287,6 +307,5 @@ function visualize(canvas, dataArray, subsampleRate, width, height, offset) {
     }
     canvasCtx.stroke();
   };
-
   draw();
 }

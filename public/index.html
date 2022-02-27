@@ -2,83 +2,91 @@
 <html lang="en">
 <meta charset="UTF-8">
 <head>
-	<title>eartunes | Fan Zeng</title>
-	<link rel="stylesheet" type="text/css" href="https://fanzeng.github.io/fanzengau.com/public/css/default.css">
-	<link rel="stylesheet" type="text/css" href="css/eartunes.css">
-	<script type="text/javascript" src="vendor/script/jquery.min.js"></script>
-
+  <title>eartunes | Fan Zeng</title>
+  <link rel="stylesheet" type="text/css" href="https://fanzeng.github.io/fanzengau.com/public/css/default.css">
+  <link rel="stylesheet" type="text/css" href="css/eartunes.css">
+  <script type="text/javascript" src="vendor/script/jquery.min.js"></script>
 </head>
 <body>
-	<h1>
-		eartunes
-	</h1>
-	<div>
-		<p>
-			Sound waveform:
-		</p>
-		<canvas class="visualizer_time" width="100%" height="100"></canvas> 
-	</div>
-	<div>
-		<p>
-			Frequency plot:
-		</p>
-		<canvas class="visualizer_freq" width="100%" height="100"></canvas> 
-	</div>
-	<div>
-			<button id="turn_on_microphone" value="turn on microphone">
-        Microphone On
-      </button>
-			&nbsp; &nbsp;
-      <button id="start_analyzing" value="start_analyzing" disabled>
-        Start analyzing
-      </button>
-	</div>
-	<div>
-		<select name="pitch_change" id="pitch_change_select">
-			<option value="noChange">No change</option>
-			<option value="halfNoteFlat">Half note flat (-50 cents)</option>
-			<option value="wholeNoteFlat">Whole note flat (-100 cents)</option>
-		  </select>
-	</div>
-	<div>
-		<p>Measured frequency:
-			<span id="measured_freq">?</span> Hz
-		</p>
-		<p>
-			Closest note: <span id="closest_note_name">?</span>
-		</p>
-		<p>
-			Nominal frequency: <span id="nominal_frequency">?</span> Hz
-		</p>
-		<p>
-			<span id="sharp_flat_string"></span> 
-		</p>
-	</div>
-	<div>
-		pitch table:
-		<p>
-			40,c′ 1-line octave ,C4 Middle C ,261.6256<br>
-			41,c♯′/d♭′ ,C♯4/D♭4 ,277.1826<br>
-			42,d′ ,D4 ,293.6648<br>
-			43,d♯′/e♭′ ,D♯4/E♭4 ,311.127<br>
-			44,e′ ,E4 ,329.6276<br>
-			45,f′ ,F4 ,349.2282<br>
-			46,f♯′/g♭′ ,F♯4/G♭4 ,369.9944<br>
-			47,g′ ,G4 ,391.9954<br>
-			48,g♯′/a♭′ ,G♯4/A♭4 ,415.3047<br>
-			49,a′ ,A4 A440 ,440<br>
-			50,a♯′/b♭′ ,A♯4/B♭4 ,466.1638<br>
-			51,b′ ,B4 ,493.8833<br>
-			52,c′′ 2-line octave ,C5 Tenor C ,523.2511<br>
-			53,c♯′′/d♭′′ ,C♯5/D♭5 ,554.3653<br>
-			54,d′′ ,D5 ,587.3295<br>
-			55,d♯′′/e♭′′ ,D♯5/E♭5 ,622.254<br>
-			56,e′′ ,E5 ,659.2551<br>
-			57,f′′ ,F5 ,698.4565<br>
-		</p>
-	</div>
-	<script type="text/javascript" src="https://fanzeng.github.io/minifft/minifft.js"></script>
-	<script type="text/javascript" src="script/index.js"></script>
-
+  <h1>
+    eartunes
+  </h1>
+  <div>
+    <p>
+      Sound waveform:
+    </p>
+    <canvas class="visualizer-time" width="100%" height="100"></canvas> 
+  </div>
+  <div>
+    <p>
+      Frequency plot:
+    </p>
+    <canvas class="visualizer-freq" width="100%" height="100"></canvas> 
+  </div>
+  <div>
+    <button id="turn-on-microphone" value="turn on microphone">
+      Microphone On
+    </button>
+    &nbsp; &nbsp;
+    <button id="start-analyzing" value="start analyzing" disabled>
+      Start analyzing
+    </button>
+  </div>
+  <div>
+    <input type="checkbox" id="temperament-octave-only" value="isTemperamentOctaveOnly" checked></input>
+    <label for="temperament-octave-only">Temperament octave only</label><br>
+    <p>Measured frequency:
+      <span id="measured-freq">?</span> Hz
+    </p>
+    <p>
+      Nominal frequency: <span id="nominal-frequency">?</span> Hz
+    </p>
+    <div>
+      <select name="pitch-change" id="pitch-change-select">
+        <option value="noChange">No change</option>
+        <option value="halfNoteFlat">Half note flat (-50 cents)</option>
+        <option value="wholeNoteFlat">Whole note flat (-100 cents)</option>
+      </select>
+      <p>
+        Closest note: <span id="closest-note-name">?</span>
+      </p>
+      <p>
+        <span id="sharp-flat-string"></span> 
+      </p>
+    </div>
+  </div>
+  <div>
+    <button id="btn-show-pitch-table">Show pitch table</button>
+    <p id="pitch-table" hidden>
+      Pitch table:<br>
+      33,f ,F3 ,174.6141<br>
+      34,f♯/g♭ ,F♯3/G♭3 ,184.9972<br>
+      35,g ,G3 ,195.9977<br>
+      36,g♯/a♭ ,G♯3/A♭3 ,207.6523<br>
+      37,a ,A3 ,220<br>
+      38,a♯/b♭ ,A♯3/B♭3 ,233.0819<br>
+      39,b ,B3 ,246.9417<br>
+      40,c′ 1-line octave ,C4 Middle C ,261.6256<br>
+      41,c♯′/d♭′ ,C♯4/D♭4 ,277.1826<br>
+      42,d′ ,D4 ,293.6648<br>
+      43,d♯′/e♭′ ,D♯4/E♭4 ,311.127<br>
+      44,e′ ,E4 ,329.6276<br>
+      45,f′ ,F4 ,349.2282<br>
+      46,f♯′/g♭′ ,F♯4/G♭4 ,369.9944<br>
+      47,g′ ,G4 ,391.9954<br>
+      48,g♯′/a♭′ ,G♯4/A♭4 ,415.3047<br>
+      49,a′ ,A4 A440 ,440<br>
+      50,a♯′/b♭′ ,A♯4/B♭4 ,466.1638<br>
+      51,b′ ,B4 ,493.8833<br>
+      52,c′′ 2-line octave ,C5 Tenor C ,523.2511<br>
+      53,c♯′′/d♭′′ ,C♯5/D♭5 ,554.3653<br>
+      54,d′′ ,D5 ,587.3295<br>
+      55,d♯′′/e♭′′ ,D♯5/E♭5 ,622.254<br>
+      56,e′′ ,E5 ,659.2551<br>
+      57,f′′ ,F5 ,698.4565<br>
+    </p>
+  </div>
+  <script type="text/javascript" src="https://fanzeng.github.io/minifft/minifft.js"></script>
+  <script type="text/javascript" src="script/index.js"></script>
 </body>
 </html>
