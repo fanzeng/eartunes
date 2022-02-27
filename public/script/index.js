@@ -243,7 +243,7 @@ function handleSuccess(stream) {
     let minDiff = 1e7;
     let closestNoteName = '?';
     let nominalfrequency = '?';
-    const arrayCandidateNote = isTemperamentOctaveOnly? arrayNote.slice(33, 53) : arrayNote; // F3 to C5
+    const arrayCandidateNote = isTemperamentOctaveOnly? arrayNote.slice(32, 52) : arrayNote; // F3 to C5
     for (let i = 0; i < arrayCandidateNote.length; i++) {
       let note = arrayCandidateNote[i];
       let diff = Math.abs(parseFloat(note.freq) - pitch);
